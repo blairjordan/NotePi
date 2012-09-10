@@ -37,11 +37,11 @@ def is_played( tweet_id ):
 		if count != 0:
 			played = True
 		con.commit()
-			
+
 	except lite.Error, e:
         	print "Error %s:" % e.args[0]
         	sys.exit(1)
-	
+
 	return played
 
 # Mark a tweet as 'played' by recording the tweet id
@@ -54,7 +54,7 @@ def mark_played( tweet_id ):
 	except lite.Error, e:
 		print "Error %s:" % e.args[0]
 		sys.exit(1)
-	
+
 	return
 
 # Return the next Twitter sequence to play
@@ -63,7 +63,7 @@ def get_next_tweet():
 	statuses = api.GetMentions()
 
 	for tweet in statuses:
-		
+
 		if not is_played( tweet.id ):
 			mark_played( tweet.id )
 			tweet_text = tweet.text
@@ -71,33 +71,39 @@ def get_next_tweet():
 
 	return tweet_text
 
-# Validate individual note syntax
-def check_note( str ):
-        note_found = None
+# Return a list of notes contained in a chord
+def get_chord_notes( chord_str ):
+
+	chord = list()
+
         notes = ['C3','Db3','D3','Eb3','E3','F3','Gb3'
 ,'G3','Ab3','A3','Bb3','B3','C4']
 
         for note in notes:
-                if str == note:
-                        note_found = True
-                        break
+		found = chord_str.find(note)
+                if found >= 0:
+                        chord.append(note)
 
-        return note_found
+        return chord
 
 tweet = get_next_tweet()
 
 if tweet:
 	STRING = 1
-	notes = list(token[STRING] for token 
+	# Extract a list of chords from the tweet
+	chords = list(token[STRING] for token 
 		in generate_tokens(StringIO(tweet).readline)
 		if token[STRING])
 
-	for note in notes:
-		if check_note(note):
+	for chord in chords:
+		notes = get_chord_notes(chord)
+
+		# Play all the notes in the chord
+		for note in notes:
 			note_wav = "%s%s.wav" % (wav_path, note)
 			sound = pygame.mixer.Sound(note_wav)
 			sound.play()
-			time.sleep(1.5)
+		time.sleep(1.5)
 
 if con:
 	con.close()
